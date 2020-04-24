@@ -1,0 +1,200 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Pipeline for Cloudformation-Deployment of the baseInfrastructure
+
+Parameters:
+  RemoteAccount:
+    Description: "AWS AccountId for the RemoteAccount"
+    Type: Number
+  Project:
+    Description: "The name of the github project/organization"
+    Type: String
+  Repository:
+    Description: "The name of the git repository"
+    Type: String
+  PipelineKmsKeyArn:
+    Description: "The arn of the KMS-Key that is used for the enryption/decryption of the ArtifactStore"
+    Type: String
+  ArtifactBucket:
+    Description: "The Name of the CI/CD Artifact Store"
+    Type: String
+
+  #internal vars:
+  BaseInfraCrossAccountRole:
+    Description: "Name of the BaseInfraCrossAccountRole"
+    Type: String
+    Default: 'BaseInfraCrossAccountRole'
+  BaseInfraCrossAccountCoreRole:
+    Description: "Name of the BaseInfraCrossAccountCoreRole"
+    Type: String
+    Default: 'BaseInfraCrossAccountCoreRole'
+
+Resources:
+  PipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: baseInfraPipelineRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+  PipelineRolePolicies:
+    Type: AWS::IAM::Policy
+    DependsOn: PipelineRole
+    Properties:
+      PolicyName: baseInfraPipelinePolicies
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - codepipeline:*
+              - iam:ListRoles
+              - cloudformation:Describe*
+              - cloudFormation:List*
+              - codebuild:BatchGetBuilds
+              - codebuild:StartBuild
+              - cloudformation:CreateStack
+              - cloudformation:DeleteStack
+              - cloudformation:DescribeStacks
+              - cloudformation:UpdateStack
+              - cloudformation:CreateChangeSet
+              - cloudformation:DeleteChangeSet
+              - cloudformation:DescribeChangeSet
+              - cloudformation:ExecuteChangeSet
+              - cloudformation:SetStackPolicy
+              - cloudformation:ValidateTemplate
+              - iam:PassRole
+              - s3:ListAllMyBuckets
+              - s3:GetBucketLocation
+              - s3:*
+            Resource:
+              - "*"
+          - Effect: Allow
+            Action:
+              - kms:Decrypt
+              - kms:DescribeKey
+            Resource: !Sub ${PipelineKmsKeyArn}
+          - Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetObject
+              - s3:ListBucket
+              - s3:GetBucketPolicy
+            Resource:
+              - !Join
+                - ''
+                - - 'arn:aws:s3:::'
+                  - !Sub ${ArtifactBucket}
+              - !Join
+                - ''
+                - - 'arn:aws:s3:::'
+                  - !Sub ${ArtifactBucket}
+                  - '/*'
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Resource:
+              - !Join
+                - ''
+                - - 'arn:aws:iam::'
+                  - !Sub ${RemoteAccount}
+                  - ':role/'
+                  - !Sub ${BaseInfraCrossAccountRole}
+              - !GetAtt PipelineRole.Arn
+      Roles:
+        - !Ref PipelineRole
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    DependsOn:
+      - PipelineRole
+      - PipelineRolePolicies
+    Properties:
+      Name: baseInfrastructurePipeline
+      ArtifactStore:
+        EncryptionKey:
+          Id: !Sub ${PipelineKmsKeyArn}
+          Type: KMS
+        Location: !Sub ${ArtifactBucket}
+        Type: S3
+      RestartExecutionOnUpdate: False
+      RoleArn: !GetAtt PipelineRole.Arn
+      Stages:
+        - Name: Checkout-SourceCode
+          Actions:
+            - Name: Checkout-SourceCode
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: 1
+              Configuration:
+                Owner: !Sub ${Project}
+                Repo: !Sub ${Repository}
+                Branch: master
+                PollForSourceChanges: False
+                OAuthToken: 123
+              OutputArtifacts:
+                - Name: SourceArtifact
+              RunOrder: 1
+        - Name: Deploy
+          Actions:
+            - Name: deploy-vpc
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: 1
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+                StackName: base-vpc
+                RoleArn: !Sub "arn:aws:iam::${RemoteAccount}:role/${BaseInfraCrossAccountCoreRole}"
+                TemplatePath: "SourceArtifact::infrastructure/vpc/template.yaml"
+                TemplateConfiguration: "SourceArtifact::infrastructure/vpc/dev.json"
+              InputArtifacts:
+                - Name: SourceArtifact
+              RoleArn: !Sub "arn:aws:iam::${RemoteAccount}:role/${BaseInfraCrossAccountRole}"
+              RunOrder: 1
+
+            - Name: deploy-ecsCluster
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: 1
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+                StackName: base-ecsCluster
+                RoleArn: !Sub "arn:aws:iam::${RemoteAccount}:role/${BaseInfraCrossAccountCoreRole}"
+                TemplatePath: "SourceArtifact::infrastructure/ecs-cluster/template.yaml"
+                TemplateConfiguration: "SourceArtifact::infrastructure/ecs-cluster/dev.json"
+              InputArtifacts:
+                - Name: SourceArtifact
+              RoleArn: !Sub "arn:aws:iam::${RemoteAccount}:role/${BaseInfraCrossAccountRole}"
+              RunOrder: 1
+
+            - Name: deploy-elb
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: 1
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+                StackName: base-elb
+                RoleArn: !Sub "arn:aws:iam::${RemoteAccount}:role/${BaseInfraCrossAccountCoreRole}"
+                TemplatePath: "SourceArtifact::infrastructure/elb/template.yaml"
+                TemplateConfiguration: "SourceArtifact::infrastructure/elb/dev.json"
+              InputArtifacts:
+                - Name: "SourceArtifact"
+              RoleArn: !Sub "arn:aws:iam::${RemoteAccount}:role/${BaseInfraCrossAccountRole}"
+              RunOrder: 2
