@@ -79,6 +79,8 @@ Resources:
             Action:
               - kms:Decrypt
               - kms:DescribeKey
+              - kms:Encrypt
+              - kms:GenerateDataKey
             Resource: !Sub ${PipelineKmsKeyArn}
           - Effect: Allow
             Action:
@@ -86,6 +88,10 @@ Resources:
               - s3:GetObject
               - s3:ListBucket
               - s3:GetBucketPolicy
+              - s3:GetObjectVersion
+              - s3:GetBucketVersioning
+              - s3:ListBucketVersions
+              - s3:GetObjectVersionTagging
             Resource:
               - !Join
                 - ''
