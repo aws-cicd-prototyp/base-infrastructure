@@ -1,6 +1,6 @@
 {
   "Parameters": {
-    "VpcStack": "base-vpc-dev",
+    "VpcStack": "base-vpc",
     "Stage": "dev"
   }
 }
