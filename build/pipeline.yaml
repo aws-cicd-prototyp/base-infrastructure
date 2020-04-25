@@ -17,6 +17,12 @@ Parameters:
   ArtifactBucket:
     Description: "The Name of the CI/CD Artifact Store"
     Type: String
+  Branch:
+    Description: "The Branch Name"
+    Type: String
+  Stage:
+    Description: "The Stage"
+    Type: String
 
   #internal vars:
   BaseInfraCrossAccountRole:

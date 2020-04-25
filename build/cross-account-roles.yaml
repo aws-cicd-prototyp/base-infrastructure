@@ -11,6 +11,12 @@ Parameters:
   PipelineKmsKeyArn:
     Description: "The arn of the KMS-Key that is used for the enryption/decryption of the ArtifactStore"
     Type: String
+  Branch:
+    Description: "The Branch Name"
+    Type: String
+  Stage:
+    Description: "The Stage"
+    Type: String
 
 Resources:
   BaseInfraCrossAccountRole:
