@@ -147,5 +147,6 @@ Resources:
                     }
               InputArtifacts:
                 - Name: "SourceArtifact"
+                - Name: "VpcStage"
               RoleArn: !Sub "arn:aws:iam::${RemotePreviewAccount}:role/CodePipelineServiceRole-${AWS::Region}-${RemotePreviewAccount}"
               RunOrder: 2
