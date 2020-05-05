@@ -42,8 +42,7 @@ Resources:
       Type: application
       SecurityGroups:
         - !Ref SgALB
-      Subnets:
-        - !Ref PublicSubnetIds
+      Subnets: !Ref PublicSubnetIds
       Tags:
         - Key: "Name"
           Value: !Sub ${AWS::StackName}
