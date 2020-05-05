@@ -1,0 +1,104 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description:  "The Cf-Stack for the ELb"
+Parameters:
+  PublicSubnetIds:
+    Type: CommaDelimitedList
+  VpcId:
+    Type: String
+  Project:
+    Type: String
+  Repository:
+    Type: String
+  Stage:
+    Type: String
+  Suffix:
+    Type: String
+
+Resources:
+  SgALB:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub base-sg-elb-${Stage}
+      GroupDescription: "Security-Group for the ALB"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          CidrIp: "0.0.0.0/0"
+          Description: "ingress rule for tcp on port 8080"
+          FromPort: 8080
+          ToPort: 8080
+      VpcId: !Ref VpcId
+      Tags:
+        - Key: "Name"
+          Value: !Sub base-sg-elb-${Stage}
+        - Key: "Stage"
+          Value: !Sub ${Stage}
+
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub ${AWS::StackName}
+      IpAddressType: ipv4
+      Scheme: internet-facing
+      Type: application
+      SecurityGroups:
+        - !Ref SgALB
+      Subnets:
+        - !Ref PublicSubnetIds
+      Tags:
+        - Key: "Name"
+          Value: !Sub ${AWS::StackName}
+        - Key: "Stage"
+          Value: !Sub ${Stage}
+
+  AlbTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${AWS::StackName}-tg
+      HealthCheckEnabled: True
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: "/health"
+      HealthCheckPort: "8080"
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 5
+      UnhealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200
+      Protocol: HTTP
+      Port: 8080
+      Tags:
+        - Key: "Name"
+          Value: !Sub ${AWS::StackName}-tg
+        - Key: "Stage"
+          Value: !Sub ${Stage}
+      TargetType: "ip"
+      VpcId: !Ref VpcId
+
+  AlbListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    DependsOn: ALB
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Protocol: HTTP
+      Port: 8080
+      DefaultActions:
+        - Order: 1
+          Type: "forward"
+          TargetGroupArn: !Ref AlbTargetGroup
+
+Outputs:
+  AlbArnOutput:
+    Description: The Arn of the ALB
+    Value: !Ref ALB
+    Export:
+      Name: !Sub ${AWS::StackName}:AlbARN
+  TargetGroupArnOutput:
+    Description: The Arn of the TargetGroup
+    Value: !Ref AlbTargetGroup
+    Export:
+      Name: !Sub ${AWS::StackName}:TargetGroupARN
+  AlbSecurityGroupIdOutput:
+    Description: The Id of the SecurityGroup of the alb
+    Value: !Ref SgALB
+    Export:
+      Name: !Sub ${AWS::StackName}:Alb-SG-Id
