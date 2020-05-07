@@ -7,39 +7,24 @@ AWS_REGION ?= eu-central-1
 DEVOPS_ACCOUNT_ID=147376585776
 WORKLOAD_ACCOUNT_ID=496106771575
 
-deployCrossAccountRoles:
-	@echo "Creating the baseCrossAccountRoles Stack..."
-	@aws cloudformation create-stack \
-		--stack-name baseInfraCrossAccountRoles \
-		--template-body file://build/cross-account-roles.yaml \
-		--parameters \
-                	ParameterKey="ArtifactBucket",ParameterValue="codepipeline-artifacts-test-bcadd1a0" \
-                	ParameterKey="DevOpsAccount",ParameterValue="147376585776" \
-                	ParameterKey="PipelineKmsKeyArn",ParameterValue="arn:aws:kms:eu-central-1:147376585776:key/0a85b8c2-4280-48e9-97c7-5c5917144b23" \
-        --capabilities CAPABILITY_NAMED_IAM \
-		--profile ${AWS_PROD_PROFILE} \
-		--region ${AWS_REGION}
-
-	@echo "Waiting till all resources have been created... this can take some minutes"
-	@aws cloudformation wait stack-create-complete \
-		--stack-name baseInfraCrossAccountRoles \
-		--profile ${AWS_PROD_PROFILE} \
-		--region ${AWS_REGION}
-	@echo "successful created!"
-
 deployPipeline:
 	@echo "Creating the Pipeline Stack..."
 	@aws cloudformation create-stack \
 		--stack-name baseInfrastructurePipeline \
 		--template-body file://build/pipeline.yaml \
 		--parameters \
-        			ParameterKey="RemoteAccount",ParameterValue="496106771575" \
         			ParameterKey="Project",ParameterValue="aws-cicd-prototyp" \
         			ParameterKey="Repository",ParameterValue="base-infrastructure" \
-        			ParameterKey="PipelineKmsKeyArn",ParameterValue="arn:aws:kms:eu-central-1:147376585776:key/0a85b8c2-4280-48e9-97c7-5c5917144b23" \
-        			ParameterKey="ArtifactBucket",ParameterValue="codepipeline-artifacts-test-bcadd1a0" \
+	    			ParameterKey="Suffix",ParameterValue="customSuffix" \
         			ParameterKey="Branch",ParameterValue="master" \
         			ParameterKey="Stage",ParameterValue="prod" \
+	      			ParameterKey="RemotePreviewAccount",ParameterValue="169093882879" \
+        			ParameterKey="RemoteDeliveryAccount",ParameterValue="496106771575" \
+        			ParameterKey="ArtifactBucket",ParameterValue="ci-cd-bootstrap-devopsbasedelivery-artifactstore-1lttxt4rg1a4w" \
+        			ParameterKey="PipelineKmsKeyArn",ParameterValue="arn:aws:kms:eu-central-1:147376585776:key/76da54a3-6d7e-4b18-ab60-47bdb1ea5dea" \
+        			ParameterKey="PipelineServiceRoleArn",ParameterValue="arn:aws:iam::147376585776:role/CI-CD-Bootstrap-PipelineRolesD-PipelineServiceRole-7PEE7V5KVHUI" \
+        			ParameterKey="DynamicPipelineCleanupLambdaArn",ParameterValue="arn:aws:lambda:eu-central-1:147376585776:function:CI-CD-Bootstrap-DevOpsLam-DynamicPipelineCleanupLa-B1TEUINGML5I" \
+        			ParameterKey="CreteForDelivery",ParameterValue="true" \
 		--profile ${AWS_DEVOPS_PROFILE} \
 		--capabilities CAPABILITY_NAMED_IAM \
 		--region ${AWS_REGION}
