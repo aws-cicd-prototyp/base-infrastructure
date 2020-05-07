@@ -24,7 +24,7 @@ deployPipeline:
         			ParameterKey="PipelineKmsKeyArn",ParameterValue="arn:aws:kms:eu-central-1:147376585776:key/76da54a3-6d7e-4b18-ab60-47bdb1ea5dea" \
         			ParameterKey="PipelineServiceRoleArn",ParameterValue="arn:aws:iam::147376585776:role/CI-CD-Bootstrap-PipelineRolesD-PipelineServiceRole-7PEE7V5KVHUI" \
         			ParameterKey="DynamicPipelineCleanupLambdaArn",ParameterValue="arn:aws:lambda:eu-central-1:147376585776:function:CI-CD-Bootstrap-DevOpsLam-DynamicPipelineCleanupLa-B1TEUINGML5I" \
-        			ParameterKey="CreteForDelivery",ParameterValue="true" \
+        			ParameterKey="CreateForDelivery",ParameterValue="true" \
 		--profile ${AWS_DEVOPS_PROFILE} \
 		--capabilities CAPABILITY_NAMED_IAM \
 		--region ${AWS_REGION}

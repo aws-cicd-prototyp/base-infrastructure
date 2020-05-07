@@ -36,15 +36,14 @@ Parameters:
   DynamicPipelineCleanupLambdaArn:
     Description: CF Stack cleanup Lambda ARN
     Type: String
-  CreteForDelivery:
+  CreateForDelivery:
     Description: Conditional-Param that indicates whether a pipeline should be created for delivery(int,prod) or preview(dev)
     Type: String
     Default: false
     AllowedValues: [true, false]
 
 Conditions:
-  ShouldCreateForDelivery: !Equals [ "CreteForDelivery", true ]
-  ShouldCreateForPreviewStages: !Equals [ "CreateForPreviewStages", true ]
+  ShouldCreateForDelivery: !Equals [ !Ref CreateForDelivery, true ]
 
 Resources:
   Pipeline:
@@ -77,11 +76,10 @@ Resources:
               OutputArtifacts:
                 - Name: SourceArtifact
               RunOrder: 1
-        - Name:
-          !If
-          - ShouldCreateForDelivery
-          - DeployToInt
-          - DeployToDev
+        - Name: !If
+            - ShouldCreateForDelivery
+            - 'DeployToInt'
+            - 'DeployToDev'
           Actions:
             - Name: DeployVPC
               ActionTypeId:
@@ -208,14 +206,7 @@ Resources:
                 RunOrder: 3
           - !Ref AWS::NoValue
 
-  DynamicPipelineCleanupDev:
-    Type: "AWS::CloudFormation::CustomResource"
-    Version: '1.0'
-    Properties:
-      ServiceToken: !Ref DynamicPipelineCleanupLambdaArn
-      RoleArn: !Sub arn:aws:iam::${RemotePreviewAccount}:role/CodePipelineServiceRole-${AWS::Region}-${RemotePreviewAccount}
-      Region: !Ref AWS::Region
-      StackName: !Sub "s3-bucket-${Stage}-${Suffix}"
+
 
 
 #            - Name: deployEcsCluster
