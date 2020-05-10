@@ -49,7 +49,7 @@ Resources:
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      Name: !Sub "${Project}-${Repository}-${Stage}-${Suffix}"
+      Name: !Sub "base-infrastructure-${Repository}-${Stage}-${Suffix}"
       ArtifactStore:
         EncryptionKey:
           Id: !Ref PipelineKmsKeyArn
@@ -104,8 +104,8 @@ Resources:
                 OutputFileName: output.json
               InputArtifacts:
                 - Name: SourceArtifact
-              OutputArtifacts:
-                - Name: VpcStage
+#              OutputArtifacts:
+#                - Name: VpcStage
               RoleArn: !Sub "arn:aws:iam::${RemotePreviewAccount}:role/CodePipelineServiceRole-${AWS::Region}-${RemotePreviewAccount}"
               RunOrder: 2
             - Name: deployEcsCluster
@@ -176,8 +176,8 @@ Resources:
                   OutputFileName: output.json
                 InputArtifacts:
                   - Name: SourceArtifact
-                OutputArtifacts:
-                  - Name: VpcStage
+#                OutputArtifacts:
+#                  - Name: VpcStage
                 RoleArn: !Sub "arn:aws:iam::${RemoteDeliveryAccount}:role/CodePipelineServiceRole-${AWS::Region}-${RemoteDeliveryAccount}"
                 RunOrder: 2
               - Name: deployEcsCluster

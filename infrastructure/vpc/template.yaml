@@ -245,11 +245,17 @@ Outputs:
   VpcId:
     Description: The Id of the VPC which was created by the stack
     Value: !Ref VPC
+    Export:
+      Name: !Sub ${AWS::StackName}:VpcId
 
   PrivateSubnetIds:
     Value: !Sub "${PrivateSubnetA},${PrivateSubnetB},${PrivateSubnetC}"
+    Export:
+      Name: !Sub ${AWS::StackName}:PrivateSubnetIds
 
   PublicSubnetIds:
     Value: !Sub "${PublicSubnetA},${PublicSubnetB},${PublicSubnetC}"
+    Export:
+      Name: !Sub ${AWS::StackName}:PublicSubnetIds
 
 
