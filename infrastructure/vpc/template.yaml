@@ -258,4 +258,30 @@ Outputs:
     Export:
       Name: !Sub ${AWS::StackName}:PublicSubnetIds
 
+  PublicSubnetA:
+    Value: !Ref PublicSubnetA
+    Export:
+      Name: !Sub ${AWS::StackName}:PublicSubnetA
+  PublicSubnetB:
+    Value: !Ref PublicSubnetB
+    Export:
+      Name: !Sub ${AWS::StackName}:PublicSubnetB
+  PublicSubnetC:
+    Value: !Ref PublicSubnetC
+    Export:
+      Name: !Sub ${AWS::StackName}:PublicSubnetC
+
+  PrivateSubnetA:
+    Value: !Ref PrivateSubnetA
+    Export:
+      Name: !Sub ${AWS::StackName}:PrivateSubnetA
+  PrivateSubnetB:
+    Value: !Ref PrivateSubnetB
+    Export:
+      Name: !Sub ${AWS::StackName}:PrivateSubnetB
+  PrivateSubnetC:
+    Value: !Ref PrivateSubnetC
+    Export:
+      Name: !Sub ${AWS::StackName}:PrivateSubnetC
+
 
