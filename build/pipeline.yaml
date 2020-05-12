@@ -72,7 +72,7 @@ Resources:
                 Repo: !Ref Repository
                 Branch: !Ref Branch
                 PollForSourceChanges: False
-                OAuthToken: 123
+                OAuthToken: "{{resolve:ssm:GitHubToken:1}}"
               OutputArtifacts:
                 - Name: SourceArtifact
               RunOrder: 1
