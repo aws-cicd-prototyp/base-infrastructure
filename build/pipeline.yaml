@@ -145,7 +145,7 @@ Resources:
                   Provider: Manual
                   Version: 1
                 Configuration:
-                  CustomData: 'Approve or Refect with comments here.'
+                  CustomData: 'Approve or Refect with comments here...'
                 RunOrder: 1
           - !Ref AWS::NoValue
 
