@@ -205,3 +205,8 @@ Resources:
                 RoleArn: !Sub "arn:aws:iam::${RemoteDeliveryAccount}:role/CodePipelineServiceRole-${AWS::Region}-${RemoteDeliveryAccount}"
                 RunOrder: 3
           - !Ref AWS::NoValue
+
+Outputs:
+  VpcStackName:
+    Description: The name of the VPC stack
+    Value: !Sub "base-vpc-${Stage}-${Suffix}"
